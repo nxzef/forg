@@ -1,1 +1,1 @@
-## Forg is a CLI File Organizer tool.
+## Forg is a CLI file organizer.
