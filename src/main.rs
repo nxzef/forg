@@ -1,5 +1,10 @@
-use std::{collections::HashMap, fs, path::{Path, PathBuf}};
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+};
 
+mod categories;
 
 const PATH: &'static str = "/home/naseef/Downloads_test";
 
@@ -18,32 +23,35 @@ fn main() {
         return println!("The path does not exist.");
     }
 
-    println!("Path: {:?}", path);
-    println!("Can be continued...");
-
-    let _category = HashMap::<&str, Vec<PathBuf>>::new();
+    let mut collection = HashMap::<&str, Vec<PathBuf>>::new();
 
     let dir_entries = fs::read_dir(path).unwrap();
     for entry in dir_entries {
         let entry = entry.unwrap();
         let path = entry.path();
 
-        let hidden: bool = path.file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .starts_with(".");
+        let hidden: bool = path.file_name().unwrap().to_str().unwrap().starts_with(".");
 
         if path.is_dir() || hidden || path.is_symlink() {
             continue;
         }
 
-        if let Some(extension) = path.extension() {
-            let extension = extension.to_str().unwrap().to_lowercase();
-            println!("File: {:?}, Extension: {}", path.file_name().unwrap(), extension);
-        } else {
-            println!("File: {:?}, Extension: None", path.file_name().unwrap());
-        }
+        let category = categories::get_category(path.extension());
+        collection
+            .entry(category)
+            .or_insert_with(Vec::new)
+            .push(path.clone());
     }
 
+    for (category, files) in collection.iter() {
+        println!("Category: {}", category);
+        let dest = path.join(category);
+        println!("Destination: {:?}", dest);
+        fs::create_dir_all(&dest).expect("Failed to create directory.");
+        for file in files {
+            println!("  - {:?}", file.file_name().unwrap());
+            let dest_file = dest.join(file.file_name().unwrap());
+            fs::rename(file, dest_file).expect("Failed to move file.");
+        }
+    }
 }
