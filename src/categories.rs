@@ -1,5 +1,6 @@
 use std::{collections::HashMap, ffi::OsStr};
 
+
 pub fn category_extension_map() -> HashMap<&'static str, Vec<&'static str>> {
     HashMap::from([
         // 🎬 Videos
@@ -50,7 +51,7 @@ pub fn category_extension_map() -> HashMap<&'static str, Vec<&'static str>> {
             vec![
                 "zip", "zipx", "rar", "7z", "tar", "gz", "bz2", "xz", "z", "lz", "lzma", "lrz",
                 "zst", "br", "tgz", "tbz", "tbz2", "tb2", "taz", "tz2", "tlz", "txz", "jar", "war",
-                "ear", "apk", "deb", "rpm", "cab", "arj", "lzh", "ace", "iso", "dmg", "pkg", "sit",
+                "ear", "apk", "deb", "rpm", "cab", "arj", "lzh", "ace", "dmg", "pkg", "sit",
                 "sitx", "sea", "alz", "sfark", "cpio", "pak", "r00", "001", "wim", "esd", "lzip",
                 "lz4", "snappy",
             ],
@@ -488,21 +489,27 @@ pub fn category_extension_map() -> HashMap<&'static str, Vec<&'static str>> {
     ])
 }
 
-/// Get category for a file extension (case-insensitive)
-pub fn get_category(extension: Option<&OsStr>) -> &'static str {
-    let unknown = "Unknown";
+/// Optimized: Get category using pre-built map (avoids recreating HashMap)
+pub fn get_category_with_map(
+    extension: Option<&OsStr>,
+    category_map: &HashMap<&'static str, Vec<&'static str>>,
+) -> &'static str {
     let ext_str = match extension.and_then(|ext| ext.to_str()) {
         Some(ext) => ext.to_lowercase(),
-        None => return unknown,
+        None => return "Unknown",
     };
 
-    let category_map = category_extension_map();
-
-    for (category, extensions) in category_map.iter() {
+    for (&category, extensions) in category_map.iter() {
         if extensions.contains(&ext_str.as_str()) {
             return category;
         }
     }
 
-    unknown
+    "Unknown"
+}
+
+// Keep old function for backwards compatibility
+pub fn get_category(extension: Option<&OsStr>) -> &'static str {
+    let category_map = category_extension_map();
+    get_category_with_map(extension, &category_map)
 }
